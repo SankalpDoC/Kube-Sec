@@ -1,0 +1,9 @@
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sRequiredNamespace
+metadata:
+  name: deny-default-ns
+spec:
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Deployment", "Pod", "ConfigMap", "Service", "Secrets"]
