@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ing-wordpress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+  labels:
+    tier: ingress
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: secure-ingress.com                    #add
+  - http:
+      paths:
+      - backend:
+          service:
+            name: wordpress
+            port:
+              number: 80
+        path: /
+        pathType: Prefix
+  tls:                                          #add
+  - hosts:                                      #add
+    - secure-ingress.com                        #add
+    secretName: secure-ingress                  #add
