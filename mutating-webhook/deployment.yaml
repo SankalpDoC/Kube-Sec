@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mu-webhook
+  # namespace: default
+  labels:
+    tier: webhook
+spec:
+  selector:
+    app: mu-webhook
+  ports:
+    - port: 443
+      targetPort: tls
+      name: application
+    - port: 80
+      targetPort: metrics
+      name: metrics
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mu-webhook
+  # namespace: default
+  labels:
+    app: mu-webhook
+    tier: webhook
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mu-webhook
+  template:
+    metadata:
+      labels:
+        app: mu-webhook
+        tier: webhook
+    spec:
+      nodeSelector:
+        kubernetes.io/os: linux
+      serviceAccountName: mu-webhook
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1234
+      containers:
+      - name: server
+        image: incogdark/mu-webhook:v2
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8443
+          name: tls
+        - containerPort: 80
+          name: metrics
+        volumeMounts:
+        - name: webhook-tls-certs
+          mountPath: /etc/webhook/certs/
+          readOnly: true
+      volumes:
+      - name: webhook-tls-certs
+        secret:
+          secretName: mu-webhook-tls
