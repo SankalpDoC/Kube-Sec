@@ -54,6 +54,6 @@ spec:
   - port: 80
     name: wordpress
     targetPort: 80
-  type: NodePort
+  type: ClusterIP
   selector:
     app: wordpress
