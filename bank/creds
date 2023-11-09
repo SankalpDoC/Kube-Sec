@@ -1,0 +1,10 @@
+mysql:
+
+- cm
+  host: mysql
+  dbName: banking-db
+
+- se
+  - username: db-admin
+    password: test@123
+  - rootpass: root@123
