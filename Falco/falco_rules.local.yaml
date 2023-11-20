@@ -1,0 +1,29 @@
+# Your custom rules!
+- macro: user_known_package_manager_in_container
+  condition: (never_true)
+- macro: package_mgmt_procs
+  condition: proc.name in (package_mgmt_binaries)
+
+- macro: package_mgmt_ancestor_procs
+  condition: proc.pname in (package_mgmt_binaries) or
+             proc.aname[2] in (package_mgmt_binaries) or
+             proc.aname[3] in (package_mgmt_binaries) or
+             proc.aname[4] in (package_mgmt_binaries)
+- list: package_mgmt_binaries
+  items: [rpm_binaries, deb_binaries, update-alternat, gem, npm, pip, pip3, sane-utils.post, alternatives, chef-client, apk, snapd]
+
+# Container is supposed to be immutable. Package management should be done in building the image.
+- rule: Launch Package Management Process in Container
+  desc: Package management process ran inside container
+  condition: >
+    spawned_process
+    and container
+    and user.name != "_apt"
+    and package_mgmt_procs
+    and not package_mgmt_ancestor_procs
+    and not user_known_package_manager_in_container
+  output: >
+    Package management process launched in container (user=%user.name user_loginuid=%user.loginuid
+    command=%proc.cmdline container_id=%container.id container_name=%container.name image=%container.image.repository:%container.image.tag)
+  priority: ERROR
+  tags: [process, mitre_persistence]
