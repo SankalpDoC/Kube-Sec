@@ -282,7 +282,7 @@ Key features include:
     CDI includes a CustomResourceDefinition (CRD) that provides an object of type DataVolume. The DataVolume is an abstraction on top of the standard Kubernetes PVC and can be used to automate creation and population of a PVC with data. Although you can use PVCs directly with CDI, DataVolumes are the preferred method since they offer full functionality, a stable API, and better integration with kubevirt.
 
     ```bash
-    v image-upload dv ubun1-v1 --insecure --access-mode ReadWriteOnce --size 30Gi --image-path ubuntu.iso --uploadproxy-url https://172.18.0.2:31001 --force-bind
+    v image-upload dv ubun2-cloud --insecure --access-mode ReadWriteOnce --size 30Gi --image-path ubun-cloud.img --uploadproxy-url https://172.18.0.2:31001 --force-bind
     ```
 
     Here for the above command, the --uploadproxy-url flag will contain: https://<"NodeIP of the node running the uploadproxy pod">:<"NodePort of the cdi-uploadproxy-nodeport service">
