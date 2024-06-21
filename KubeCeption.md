@@ -244,7 +244,6 @@ Key features include:
     export VERSION=$(curl -s https://api.github.com/repos/kubevirt/containerized-data-importer/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
     echo $VERSION
     k create -f https://github.com/kubevirt/containerized-data-importer/releases/download/$VERSION/cdi-operator.yaml
-    watch sudo kubectl -n cdi get all
     k create -f https://github.com/kubevirt/containerized-data-importer/releases/download/$VERSION/cdi-cr.yaml
     watch sudo kubectl -n cdi get all
     ```
