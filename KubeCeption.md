@@ -322,6 +322,9 @@ Key features include:
     ```
 
 - Visibility
+  ```
+   while true ; do curl server-vmi-svc.default.svc.cluster.local:8080 ; sleep 1 ; done
+  ```
 
 k create ns sample        --context kind-child
 
