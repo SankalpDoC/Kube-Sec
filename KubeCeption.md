@@ -320,216 +320,85 @@ Key features include:
 
     sudo istioctl dashboard kiali
     ```
+- Inside LINUX VMs
 
-- Visibility
+  To check Ubuntu version: 
   ```
-   while true ; do curl server-vmi-svc.default.svc.cluster.local:8080 ; sleep 1 ; done
+  lsb_release -a
   ```
 
-k create ns sample        --context kind-child
-
-k label namespace sample istio-injection=enabled      --context=kind-child
-
-
-k apply  -f samples/helloworld/helloworld.yaml   -l service=helloworld -n sample     --context kind-child
-
-k apply -f samples/helloworld/helloworld.yaml    -l version=v1 -n sample
-k --context kind-child apply -f samples/helloworld/helloworld.yaml    -l version=v2 -n sample
-
-k apply -f samples/sleep/sleep.yaml -n sample    --context kind-child
-
-
-k exec -n sample -c sleep \
-    "$(k get pod -n sample -l \
-    app=sleep -o jsonpath='{.items[0].metadata.name}')" \
-    -- curl -sS helloworld.sample:5000/hello
-
-
-- Kiali 
-
-
-
-
-
-
-DASHBOARD
-
-k apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml
-
-watch sudo kubectl get pod -n kubernetes-dashboard
-k create serviceaccount -n kubernetes-dashboard admin-user
-k create clusterrolebinding -n kubernetes-dashboard admin-user --clusterrole cluster-admin --serviceaccount=kubernetes-dashboard:admin-user
-
-token=$(k -n kubernetes-dashboard create token admin-user)
-echo $token
-
-eyJhbGciOiJSUzI1NiIsImtpZCI6IkZ6VnB0NDhMSEtLeklNNXZSLWRRU1ZpcXFKN201SVFZQzc2eXJMRldUd2sifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxNzE3NjUxNDA5LCJpYXQiOjE3MTc2NDc4MDksImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJrdWJlcm5ldGVzLWRhc2hib2FyZCIsInNlcnZpY2VhY2NvdW50Ijp7Im5hbWUiOiJhZG1pbi11c2VyIiwidWlkIjoiNzYzZDI2YmEtZGFlZS00ZTNjLTlhNDAtZDVhOWM2OTE4Njg4In19LCJuYmYiOjE3MTc2NDc4MDksInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDprdWJlcm5ldGVzLWRhc2hib2FyZDphZG1pbi11c2VyIn0.tCgujCqdfvI_bXqol8LXAHq1v1OvAMYyYseTTNOqd9l-itRLx_fEBdsuyQKnExNxJ7xJy7gnM83tZLoQdBwjjnInISoOUAgxQmvYsxCbmt1-x7h5curtjDRzt0GJ1amXORWdVdp7DdOU8dRhNnVmSKnstF4QiDmSA9ZvsX_uy1tdMeVnOQHKHTXnvx4-qoaGXp8D20xmQLft92kKCO68ceBY0IsMLk5c1Yen-8n5N16FyOGLtVjuYndUDHVCkQXHPmq1Qlnq88LAKCDezVaG0jpXG0PxoguUyOrYHM9BA6pIXoTXZ1VAGQbqsmM0GUKMG-V8QDWMhT-dEstgrh9Q6A
-
-k proxy
-
-http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/
-
-
-
-
-
-
-
-
-
-
-k apply --context=kind-child \
-    -f samples/helloworld/helloworld.yaml \
-    -l service=helloworld
-
-k apply --context=kind-child \
-    -f samples/helloworld/helloworld.yaml \
-    -l version=v1
-
-
-
-k apply --context=kind-child2 \
-    -f samples/helloworld/helloworld.yaml \
-    -l version=v2
-
-
-k apply --context=kind-child \
-    -f samples/sleep/sleep.yaml
-k apply --context=kind-child2 \
-    -f samples/sleep/sleep.yaml
-
-k exec --context=kind-child  -c sleep \
-    "$(k get pod --context=kind-child  -l \
-    app=sleep -o jsonpath='{.items[0].metadata.name}')" \
-    -- curl -sS helloworld.default:5000/hello
-
-
-MERGE CONTEXT
-
-export KUBECONFIG=~/.kube/config:/path/to/local/config //(export KUBECONFIG=/root/.kube/child-config:/root/.kube/config )
-k config view --merge --flatten > ~/.kube/merged-config
-mv ~/.kube/merged-config ~/.kube/config
-
-ssh -L 34047:127.0.0.1:34047 user@host-machine-ip
-
-diff \
-   <(k --context=kind-main -n istio-system get secret cacerts -ojsonpath='{.data.root-cert\.pem}') \
-   <(k --context=kind-child -n istio-system get secret cacerts -ojsonpath='{.data.root-cert\.pem}')
-
-Debug:
-
-k -n istio-system get mutatingwebhookconfigurations.admissionregistration.k8s.io istio-sidecar-injector -oyaml
-k -n istio-system get cm istio -oyaml
-
-k --context kind-main logs -n istio-system deploy/istiod
-k logs -n istio-system <istiod-pod-name> -c discovery | grep error
-
-kubectl port-forward -n istio-system <istiod-pod-name> <POD_PORT>:<LOCAL_PORT>
-
-
-TRUST
-
-mkdir -p certs
-pushd certs
-
-sudo make -f ../tools/certs/Makefile.selfsigned.mk root-ca
-
-sudo make -f ../tools/certs/Makefile.selfsigned.mk main-cacerts
-
-k create ns istio-system       --context kind-child2
-k create secret generic cacerts -n istio-system  --from-file=main/ca-cert.pem  --from-file=main/ca-key.pem --from-file=main/root-cert.pem  --from-file=main/cert-chain.pem
-
-k --context kind-child create secret generic cacerts -n istio-system  --from-file=child/ca-cert.pem  --from-file=child/ca-key.pem --from-file=child/root-cert.pem  --from-file=child/cert-chain.pem
-
-k --context kind-child2 create secret generic cacerts -n istio-system  --from-file=kind-child2/ca-cert.pem  --from-file=kind-child2/ca-key.pem --from-file=kind-child2/root-cert.pem  --from-file=kind-child2/cert-chain.pem
-
-popd
-
-
-k apply -n foo -f - <<EOF
-apiVersion: security.istio.io/v1beta1
-kind: PeerAuthentication
-metadata:
-  name: "default"
-spec:
-  mtls:
-    mode: STRICT
-EOF
-
-
-cat <<EOF > main.yaml
-apiVersion: install.istio.io/v1alpha1
-kind: IstioOperator
-spec:
-  values:
-    global:
-      meshID: kube-ception
-      multiCluster:
-        clusterName: main
-      network: net-ception
-EOF
-
-sudo istioctl install --set values.pilot.env.EXTERNAL_ISTIOD=true -f main.yaml
-
-cd istio-1.22.0
-samples/multicluster/gen-eastwest-gateway.sh --network net-ception | sudo  istioctl install -y -f -
-
-k apply -n istio-system -f samples/multicluster/expose-istiod.yaml
-
-
-sudo istioctl create-remote-secret \
-    --context=kind-child \
-    --name=child | \
-    k apply -f - 
-
-
-  \\ export DISCOVERY_ADDRESS=$(k -n istio-system get svc istio-eastwestgateway  -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-
-echo $DISCOVERY_ADDRESS  	172.18.0.6
-
-k -n istio-system get svc istio-ingressgateway  -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
-
-
-CHILD CLUSTER
-
-k --context kind-child create namespace istio-system
-k --context kind-child annotate namespace istio-system topology.istio.io/controlPlaneClusters=main
-
-cat <<EOF > child.yaml
-apiVersion: install.istio.io/v1alpha1
-kind: IstioOperator
-spec:
-  profile: remote
-  values:
-    istiodRemote:
-      injectionPath: /inject/cluster/child/net/net-ception
-    global:
-      remotePilotAddress: ${DISCOVERY_ADDRESS}
-EOF
-
-sudo istioctl install --context kind-child -f child.yaml
-
-JOIN
-
-//sudo istioctl create-remote-secret --name=child
-sudo istioctl create-remote-secret \
-    --context=kind-child \
-    --name=child | \
-    k apply -f - 
-
-Copy certs to Child
-scp -P 31004 ca-cert.pem ubun2@172.18.0.4:/home/ubun2/istio-1.22.0/certs
-
-
-For LINUX VMs
-
-Ubuntu version: lsb_release -a
-
-
-Local Path Setup:
-
+- Local Path Setup: To enable iso recognition from the filesystem to the cluster
+```
 k apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.26/deploy/local-path-storage.yaml
-
-watch sudo kubectl -n local-path-storage get all
-
 k patch storageclass local-path -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+watch sudo kubectl -n local-path-storage get all
+```
+## Challenges
+
+### Nested Virtualization
+
+  Wasn't able to set up the kube-ception architecture in windows as the nested virtualization option was not enable to any of the hypervisors we seeked(i.e. VirtualBox or VMware). And thus were not able to install kubeVirt's CRDs in the cluster.
+
+  To check for nested virtualization support do: 
+  ```
+  egrep -c '(vmx|svm)' /proc/cpuinfo
+  ```
+
+### Wrong ISO image selection for the VMs
+
+  We need ISO images for the VMs to have an operating system running on them, but we can't just use any .iso as it can lead to underutilization and poor optimization of the resource allocated to the VM, The VMs require a light weight OS which has only the necessary packages with less overhead. For this reason Cloud images are a prefered option. When using the ubuntu desktop ISO we were not able to get network inside the VM and thus we weren't able to get internet connectivity inside it and thus no ssh to the VM was possible.
+
+  Get Ubuntu Cloud Images from here: https://cloud-images.ubuntu.com/
+
+### Unable to inject sidecars to the VMs
+
+  The isito sidecar inject annotation (sidecar.istio.io/inject: "true") should be given to the VMI(Virtual Machine Instance) spec and not in the VM(Virtual Machine) spec. This was the reason of the failure of the istiod to attach a sidecar proxy to the VMs. Also it should be noted that Linkerd can be also used instead of istio. I had no trouble setting up VM workloads to a Linkerd Mesh and in fact found it to be way more straight forward than istio even for setting up Multi-Cluster architecture.
+
+### Issues in setting the Primary-Remote Architecture via Istio
+
+  - Accessing the API server
+
+    For the Primary-Remote to work, both cluster should be having the API Server in each cluster accessible to the other cluster in the mesh. The child cluster being within the VM of the main cluster, made it difficult for the main cluster to reach the API server of the child cluster. I tried to make the API server of the child accessible from the main but merging the kubeconfig of the child cluster.
+
+    ```
+    # Copy the child's kubeconfig to the same directory of the main's kubeconfig and run
+    export KUBECONFIG=~/.kube/child-config:/path/to/local/config #( Eg. export KUBECONFIG=/root/.kube/child-config:/root/.kube/config )
+    k config view --merge --flatten > ~/.kube/merged-config  #You can vim the merged-config and will see the child's contexts,cluster and users inside it.
+    mv ~/.kube/merged-config ~/.kube/config # Will replace the config to the merged one.
+    ```
+    But just having the certificates is not the only thing needed to be able to reach the child cluster. We'll need network connectivity to it as well. And thus while SSHing to the VM, we'll create a tunnel which maps the API server's node port to the Port of the child's API server.
+  
+    ```
+    ssh -L <Child's API server NodePort>:127.0.0.1:<Child's API server NodePort> -p nodePort-VM user@host-machine-ip
+    ```
+
+  - Creating Trust Between the Clusters
+
+    For both the clusters to trust each other we need to set up certificates from a common root Certificate Athority(CA) like so 
+    ```
+
+    mkdir -p certs
+    pushd certs
+
+    sudo make -f ../tools/certs/Makefile.selfsigned.mk root-ca
+
+    sudo make -f ../tools/certs/Makefile.selfsigned.mk main-cacerts
+    sudo make -f ../tools/certs/Makefile.selfsigned.mk child-cacerts
+
+    k create ns istio-system
+    k create ns istio-system --context kind-child
+    
+    k create secret generic cacerts -n istio-system  --from-file=main/ca-cert.pem  --from-file=main/ca-key.pem --from-file=main/root-cert.pem  --from-file=main/cert-chain.pem
+
+    k --context kind-child create secret generic cacerts -n istio-system  --from-file=child/ca-cert.pem  --from-file=child/ca-key.pem --from-file=child/root-cert.pem  --from-file=child/cert-chain.pem
+
+    popd
+    ```
+    Verification
+    
+    The following shouldn't produce any output if the above steps were done correctly.
+    ```
+    diff \
+    <(k --context=kind-main -n istio-system get secret cacerts -ojsonpath='{.data.root-cert\.pem}') \
+    <(k --context=kind-child -n istio-system get secret cacerts -ojsonpath='{.data.root-cert\.pem}')
+    ```
